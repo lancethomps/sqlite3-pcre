@@ -1,16 +1,11 @@
-/*
- * Written by Alexey Tourbin <at@altlinux.org>.
- *
- * The author has dedicated the code to the public domain.  Anyone is free
- * to copy, modify, publish, use, compile, sell, or distribute the original
- * code, either in source code form or as a compiled binary, for any purpose,
- * commercial or non-commercial, and by any means.
- */
 #include <assert.h>
-#include <stdlib.h>
+#ifdef _DEBUG
+#include <stdio.h>
+#endif
 #include <string.h>
+#include <stdlib.h>
 #include <pcre.h>
-#include <sqlite3ext.h>
+#include "sqlite3ext.h"
 SQLITE_EXTENSION_INIT1
 
 typedef struct
@@ -23,6 +18,20 @@ typedef struct
 #ifndef CACHE_SIZE
 #define CACHE_SIZE 16
 #endif
+
+static void LOG(char *s, ...)
+{
+#ifdef _DEBUG
+  va_list ap;
+  FILE *fh = fopen("/tmp/sqlite3-pcre.log", "a+");
+
+  va_start(ap, s);
+  vfprintf(fh, s, ap);
+  va_end(ap);
+
+  fclose(fh);
+#endif
+}
 
 static void regexp(sqlite3_context *ctx, int argc, sqlite3_value **argv)
 {
@@ -74,7 +83,9 @@ static void regexp(sqlite3_context *ctx, int argc, sqlite3_value **argv)
       cache_entry c;
       const char *err;
       int pos;
+      LOG("pcre_compile: %s\n", re);
       c.p = pcre_compile(re, 0, &err, &pos, NULL);
+      LOG("pcre_compile DONE\n");
       if (!c.p)
       {
         char *e2 = sqlite3_mprintf("%s: %s (offset %d)", re, err, pos);
@@ -117,13 +128,19 @@ static void regexp(sqlite3_context *ctx, int argc, sqlite3_value **argv)
 
 int sqlite3_extension_init(sqlite3 *db, char **err, const sqlite3_api_routines *api)
 {
-  SQLITE_EXTENSION_INIT2(api)
+  int rc = SQLITE_OK;
+  SQLITE_EXTENSION_INIT2(api);
+  LOG("sqlite3_extension_init\n");
   cache_entry *cache = calloc(CACHE_SIZE, sizeof(cache_entry));
   if (!cache)
   {
     *err = "calloc: ENOMEM";
     return 1;
   }
-  sqlite3_create_function(db, "REGEXP", 2, SQLITE_UTF8, cache, regexp, NULL, NULL);
-  return 0;
+  LOG("sqlite3_create_function_v2\n");
+  rc = sqlite3_create_function(db, "regexp", 2,
+                               SQLITE_UTF8 | SQLITE_DETERMINISTIC,
+                               cache, regexp, NULL, NULL);
+  LOG("sqlite3_extension_init DONE rc=%d\n", rc);
+  return rc;
 }
