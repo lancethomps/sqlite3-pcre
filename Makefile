@@ -31,7 +31,7 @@ dist: clean
 	tar -czf sqlite3-pcre-${VERSION}.tar.gz sqlite3-pcre-${VERSION}
 
 clean:
-	rm -f pcre.so pcre.dylib
+	rm -rf pcre.dylib*
 
 debug:
 	@echo "CFLAGS=$(CFLAGS)"
