@@ -4,7 +4,7 @@ INSTALL=install
 DEBUG?=#-D_DEBUG
 VERBOSE?=-v -Wp,-v
 CFLAGS=$(shell pkg-config --cflags sqlite3 libpcre)
-LIBS=$(shell pkg-config --libs libpcre)
+LIBS=$(shell pkg-config --libs sqlite3 libpcre)
 prefix=$(shell brew --prefix)
 
 .PHONY: build install dist clean debug
@@ -17,7 +17,7 @@ pcre.dylib: pcre.c
 	@# gcc -g -fPIC -dynamiclib -o $@ -L"${prefix}/lib" -lsqlite3 -lpcre -Werror pcre.c -I"${prefix}/include"
 	@############################################# original custom install #############################################
 	@# gcc -shared -o pcre.so -L/usr/local/lib -lsqlite3 -lpcre -Werror pcre.c -I/usr/local/include
-	${CC} -g -fPIC -dynamiclib -o $@ -L"${prefix}/opt/sqlite/lib" -L"${prefix}/lib" -lsqlite3 -lpcre -W -Werror -Wno-unused-parameter pcre.c -I"${prefix}/opt/sqlite/include" -I"${prefix}/include" $(DEBUG) $(VERBOSE)
+	${CC} -g -fPIC -dynamiclib pcre.c -o $@ -L"${prefix}/lib" -I"${prefix}/include" $(CFLAGS) $(LIBS) -W -Werror -Wno-unused-parameter $(DEBUG) $(VERBOSE)
 
 build: pcre.dylib
 
