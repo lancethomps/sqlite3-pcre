@@ -23,6 +23,7 @@ build: pcre.dylib
 
 install: build
 	#rm -v ${DESTDIR}${prefix}/lib/sqlite3/pcre.dylib
+	mkdir -pv ${DESTDIR}${prefix}/lib/sqlite3
 	${INSTALL} -pv -m755 pcre.dylib ${DESTDIR}${prefix}/lib/sqlite3/pcre.dylib
 
 dist: clean
